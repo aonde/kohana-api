@@ -161,6 +161,7 @@ abstract class Kohana_Controller_API extends Controller
 	 */
 	public function action_index()
 	{
+	   
 		// Get the basic verb based action..
 		$action = $this->_action_map[$this->request->method()];
 
@@ -177,6 +178,7 @@ abstract class Kohana_Controller_API extends Controller
 		}
 
 		// Execute the request
+        
 		if (method_exists($this, $action))
 		{
 			try
