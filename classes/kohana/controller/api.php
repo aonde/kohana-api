@@ -1,10 +1,17 @@
 <?php
 abstract class Kohana_Controller_API extends Controller
 {
+	public $session;
+	public $auth;
+	public $user;
+
+     
 	/**
 	 * @var Object Request Payload
 	 */
 	protected $_request_payload = NULL;
+	
+	protected $_request_type_access = 'admin';
 
 	/**
 	 * @var Object Response Payload
@@ -54,7 +61,13 @@ abstract class Kohana_Controller_API extends Controller
 	public function before()
 	{
 		parent::before();
+ 
 
+		$this->auth = Auth::instance();
+		$this->session = Session::instance();
+        
+		$this->user = $this->auth->get_user();
+     	
 		$this->_parse_request();
 	}
 
@@ -161,7 +174,7 @@ abstract class Kohana_Controller_API extends Controller
 	 */
 	public function action_index()
 	{
-	   
+		
 		// Get the basic verb based action..
 		$action = $this->_action_map[$this->request->method()];
 
@@ -176,6 +189,34 @@ abstract class Kohana_Controller_API extends Controller
 		{
 			$action .= '_collection';
 		}
+
+		
+		$config = (isset(Kohana::$config->load('api')->{$this->request->controller()}) ? Kohana::$config->load('api')->{$this->request->controller()} : $this->_request_type_access);
+		if (isset($config[$action])) $this->_request_type_access = $config[$action];
+		$apidoc_acesso = ($this->request->method() == 'GET' ? $this->request->query('apidoc_acesso') : $this->request->post('apidoc_acesso'));
+		/*
+			Para o console de teste 
+		*/
+		if (isset($apidoc_acesso) and strlen($apidoc_acesso) > 1)
+		{
+			if ($this->_request_type_access == 'admin' and ($apidoc_acesso != 'admin')) {
+				die(json_encode(array('error' => true, 'message' => 'not allowed')));
+			}
+			elseif ($this->_request_type_access == 'logged' and ($apidoc_acesso == 'publico')) {
+				 die(json_encode(array('error' => true, 'message' => 'user not logged')));
+			}
+		}
+
+		if ($this->_request_type_access == 'admin') {
+			if (Auth::instance()->logged_in('admin') !== TRUE) die(json_encode(array('error' => true, 'message' => 'not allowed')));
+		}
+		elseif ($this->_request_type_access == 'logged') {
+			if (!isset($this->user->id))  die(json_encode(array('error' => true, 'message' => 'user not logged')));
+		}
+
+		
+		
+		
 
 		// Execute the request
         
