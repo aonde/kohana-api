@@ -213,6 +213,9 @@ abstract class Kohana_Controller_API extends Controller
 		elseif ($this->_request_type_access == 'logged') {
 			if (!isset($this->user->id))  die(json_encode(array('error' => true, 'message' => 'user not logged')));
 		}
+		elseif ($this->_request_type_access == 'only_internal' and $this->request->is_initial()) {
+			if (!isset($this->user->id))  die(json_encode(array('error' => true, 'message' => 'not allowed')));
+		}
 
 		
 		
